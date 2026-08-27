@@ -1,0 +1,15 @@
+{
+  "name": "arcange-portfolio",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Personal portfolio and CMS platform for Mukamyi Izere Arcange",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "echo \"Development scripts will be configured in Phase 1\"",
+    "build": "echo \"Build scripts will be configured in Phase 1\"",
+    "lint": "echo \"Lint scripts will be configured in Phase 1\""
+  }
+}
