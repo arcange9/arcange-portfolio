@@ -1,22 +1,39 @@
-const skills = ['Python','C','C++','Java','JavaScript','React.js','Node.js','Express.js','Electron.js','MongoDB','MySQL','SQL','NoSQL'];
-const projects = [
-  {name:'Munyarwanda AI',type:'AI / RAG',description:'A Kinyarwanda-focused AI project exploring retrieval-augmented generation and AI integration.'},
-  {name:'Arcange AI Assistant',type:'AI / Desktop',description:'Personal AI assistant concept combining desktop software with AI APIs.'},
-  {name:'NextBit Updates',type:'Technology Media',description:'Technology and ICT news brand focused on current digital developments.'},
-  {name:'NextByte Academy',type:'Education',description:'A technology learning platform concept for practical programming education.'}
+import { motion } from 'framer-motion';
+import { ArrowUpRight, Github, Instagram, Send, Facebook, MessageCircle, Sparkles, Code2, Database, Bot, Monitor, GraduationCap } from 'lucide-react';
+
+const skills = [
+  ['Python','Programming'],['C','Programming'],['C++','Programming'],['Java','Programming'],['JavaScript','Programming'],
+  ['HTML5','Frontend'],['CSS3','Frontend'],['React.js','Frontend'],['Node.js','Backend'],['Express.js','Backend'],
+  ['Electron.js','Desktop'],['MongoDB','Database'],['MySQL','Database'],['SQL','Database'],['NoSQL','Database']
 ];
 
+const projects = [
+  {name:'Munyarwanda AI',type:'AI / RAG',description:'A Kinyarwanda-focused AI project exploring retrieval-augmented generation and AI integration.',icon:Bot},
+  {name:'Arcange AI Assistant',type:'AI / Desktop',description:'A personal AI assistant concept combining desktop software with AI APIs.',icon:Monitor},
+  {name:'NextBit Updates',type:'Technology Media',description:'A technology and ICT news brand focused on digital developments.',icon:Sparkles},
+  {name:'NextByte Academy',type:'Education',description:'A technology learning platform concept for practical programming education.',icon:GraduationCap},
+];
+
+const socials = [
+  ['GitHub','https://github.com/arcange9',Github],['Instagram','https://instagram.com/arcangegram',Instagram],
+  ['Telegram','https://t.me/izerearcange',Send],['Facebook','https://facebook.com/arcange.froky',Facebook],
+  ['WhatsApp','https://wa.me/250724026920',MessageCircle]
+];
+
+function Section({eyebrow,title,children,id}){return <section id={id} className="section"><p className="eyebrow">{eyebrow}</p><h2>{title}</h2>{children}</section>}
+
 export default function App(){
+  const year = new Date().getFullYear();
   return <div className="site">
     <nav className="nav"><a className="logo" href="#home">ARCANGE<span>.</span></a><div className="links"><a href="#about">About</a><a href="#skills">Skills</a><a href="#projects">Projects</a><a href="#experience">Experience</a><a href="#contact">Contact</a><a className="admin" href="/admin">Admin</a></div></nav>
     <main>
-      <section id="home" className="hero"><div className="orb orb1"/><div className="orb orb2"/><p className="eyebrow">SOFTWARE • AI • COMPUTER SYSTEMS</p><h1>Mukamyi Izere <span>Arcange</span></h1><p className="lead">Software developer, AI builder and Computer Systems & Architecture student creating practical digital experiences.</p><div className="actions"><a className="button primary" href="#projects">Explore my work</a><a className="button" href="#contact">Contact me</a></div><div className="hero-tags">{skills.slice(0,6).map(s=><span key={s}>{s}</span>)}</div></section>
-      <section id="about" className="section"><p className="eyebrow">01 / ABOUT</p><h2>Building with curiosity, code & technology.</h2><p className="text">I am focused on programming, web development, AI, databases and computer systems. My portfolio brings together the projects, learning journey and technology experiments I build as I grow as a developer.</p></section>
-      <section id="skills" className="section"><p className="eyebrow">02 / TECHNOLOGIES</p><h2>My technical toolbox</h2><div className="skill-grid">{skills.map((s,i)=><div className="skill" key={s}><small>{String(i+1).padStart(2,'0')}</small><strong>{s}</strong></div>)}</div></section>
-      <section id="projects" className="section"><p className="eyebrow">03 / SELECTED WORK</p><h2>Projects with purpose.</h2><div className="project-grid">{projects.map((p,i)=><article className="card" key={p.name}><span>0{i+1}</span><p>{p.type}</p><h3>{p.name}</h3><div>{p.description}</div><a href="https://github.com/arcange9" target="_blank" rel="noreferrer">View GitHub ↗</a></article>)}</div></section>
-      <section id="experience" className="section split"><div><p className="eyebrow">04 / EXPERIENCE</p><h2>Ejo Labs</h2></div><div className="experience"><h3>Technology Training Program</h3><p className="meta">Ejo Labs · 1 Month · 2026</p><p>Participated in a one-month technology training program, developing practical knowledge around AI integration, RAG, software development and collaborative project work.</p></div></section>
-      <section id="contact" className="section contact"><p className="eyebrow">05 / CONNECT</p><h2>Let's build something useful.</h2><p className="text">Find my work and follow my technology journey.</p><div className="socials"><a href="https://github.com/arcange9">GitHub</a><a href="https://instagram.com/arcangegram">Instagram</a><a href="https://t.me/izerearcange">Telegram</a><a href="https://facebook.com/arcange.froky">Facebook</a><a href="https://wa.me/250724026920">WhatsApp</a></div></section>
+      <section id="home" className="hero"><div className="orb orb1"/><div className="orb orb2"/><motion.p initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} className="eyebrow">SOFTWARE • AI • COMPUTER SYSTEMS</motion.p><motion.h1 initial={{opacity:0,y:30}} animate={{opacity:1,y:0}} transition={{delay:.1}}>Mukamyi Izere <span>Arcange</span></motion.h1><p className="lead">Software developer, AI builder and Computer Systems & Architecture student creating practical digital experiences.</p><div className="actions"><a className="button primary" href="#projects">Explore my work <ArrowUpRight size={17}/></a><a className="button" href="#contact">Contact me</a></div><div className="hero-tags">{skills.slice(0,7).map(([s])=><span key={s}>{s}</span>)}</div></section>
+      <Section id="about" eyebrow="01 / ABOUT" title="Building with curiosity, code & technology."><p className="text">I am focused on programming, web development, AI, databases and computer systems. This portfolio brings together the projects, technical interests, learning journey and experiments I build as I grow as a developer.</p><div className="feature-row"><div><Code2/><strong>Software</strong><span>Web & desktop applications</span></div><div><Bot/><strong>AI</strong><span>AI integration & RAG</span></div><div><Database/><strong>Data</strong><span>SQL & NoSQL databases</span></div></div></Section>
+      <Section id="skills" eyebrow="02 / TECHNOLOGIES" title="My technical toolbox"><div className="skill-grid">{skills.map(([s,c],i)=><motion.div whileHover={{y:-6}} className="skill" key={s}><small>{String(i+1).padStart(2,'0')} · {c}</small><strong>{s}</strong></motion.div>)}</div></Section>
+      <Section id="projects" eyebrow="03 / SELECTED WORK" title="Projects with purpose."><div className="project-grid">{projects.map((p,i)=>{const Icon=p.icon;return <motion.article whileHover={{y:-7}} className="card" key={p.name}><span>0{i+1}</span><Icon className="card-icon"/><p>{p.type}</p><h3>{p.name}</h3><div>{p.description}</div><a href="https://github.com/arcange9" target="_blank" rel="noreferrer">View GitHub <ArrowUpRight size={15}/></a></motion.article>})}</div></Section>
+      <Section id="experience" eyebrow="04 / TRAINING & EXPERIENCE" title="Learning through real programs."><div className="experience"><div className="experience-badge"><GraduationCap/></div><div><h3>Ejo Labs — Technology Training Program</h3><p className="meta">Ejo Labs · 1 Month · 2026</p><p>Participated in a one-month technology training program, developing practical knowledge around AI integration, Retrieval-Augmented Generation (RAG), software development and collaborative project work.</p></div></div></Section>
+      <Section id="contact" eyebrow="05 / CONNECT" title="Let's build something useful."><p className="text">Find my work, follow my technology journey, or connect with me.</p><div className="socials">{socials.map(([name,url,Icon])=><a key={name} href={url} target="_blank" rel="noreferrer"><Icon size={17}/>{name}</a>)}</div></Section>
     </main>
-    <footer>© {new Date().getFullYear()} Mukamyi Izere Arcange. All rights reserved.</footer>
+    <footer>© {year} Mukamyi Izere Arcange. All rights reserved. <span>Built with code & curiosity.</span></footer>
   </div>
 }
