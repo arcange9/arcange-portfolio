@@ -1,3 +1,14 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { ShieldCheck, LogOut, User, FolderKanban, Wrench, GraduationCap, Award, Image, FileText, Settings, Link as LinkIcon } from 'lucide-react';
+import './styles.css';
 
-export default function App(){return <main style={{fontFamily:'system-ui',padding:40}}><h1>Arcange Admin</h1><p>Secure Google authentication will be connected here before CMS operations are enabled.</p><a href="/">← Public portfolio</a></main>}
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const items = [['Overview',ShieldCheck],['Profile',User],['Projects',FolderKanban],['Skills',Wrench],['Education',GraduationCap],['Experience',GraduationCap],['Achievements',Award],['Certificates',Award],['Media',Image],['CV',FileText],['Social Links',LinkIcon],['Settings',Settings]];
+
+export default function App(){
+ const [user,setUser]=useState(null); const [loading,setLoading]=useState(true); const [active,setActive]=useState('Overview');
+ useEffect(()=>{fetch(`${API}/api/auth/me`,{credentials:'include'}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setUser(d.user)).catch(()=>setUser(null)).finally(()=>setLoading(false))},[]);
+ if(loading)return <div className="admin-loading">Checking secure session…</div>;
+ if(!user)return <main className="login"><div className="login-card"><div className="shield"><ShieldCheck/></div><p className="eyebrow">ARCANGE ADMIN</p><h1>Private workspace.</h1><p>Sign in with your authorized Google account to manage your portfolio.</p><a className="google-btn" href={`${API}/api/auth/google`}><span>G</span> Continue with Google</a><a className="back" href="/">← Back to portfolio</a></div></main>;
+ return <div className="dashboard"><aside><div className="brand">ARCANGE<span>.</span></div><p className="admin-label">ADMIN PANEL</p><nav>{items.map(([name,Icon])=><button className={active===name?'active':''} onClick={()=>setActive(name)} key={name}><Icon size={17}/>{name}</button>)}</nav><div className="side-user"><img src={user.photo} alt=""/><div><strong>{user.name}</strong><small>{user.email}</small></div></div></aside><section className="main"><header><div><p className="eyebrow">SECURE CMS</p><h2>{active}</h2></div><button className="logout" onClick={async()=>{await fetch(`${API}/api/auth/logout`,{method:'POST',credentials:'include'});location.reload()}}><LogOut size={16}/> Logout</button></header><div className="content">{active==='Overview'?<><div className="welcome"><div><p className="eyebrow">WELCOME BACK</p><h1>Control your digital identity.</h1><p>Manage your profile, projects, skills, training, media and site settings from one protected workspace.</p></div><ShieldCheck size={80}/></div><div className="stats"><div><span>01</span><strong>Profile</strong><p>Photo & personal information</p></div><div><span>02</span><strong>Projects</strong><p>Showcase your work</p></div><div><span>03</span><strong>Content</strong><p>Skills, education & achievements</p></div></div></>:<div className="empty"><Settings size={34}/><h3>{active} management</h3><p>This CMS module is ready for the database-backed implementation.</p></div>}</div></section></div>
+}
