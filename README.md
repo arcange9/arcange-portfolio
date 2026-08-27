@@ -1,28 +1,27 @@
-# Arcange Portfolio
+# Arcange Personal Portfolio
 
-Personal developer portfolio and content management platform for Mukamyi Izere Arcange.
+A modern, colorful, full-stack personal portfolio and content management platform for Mukamyi Izere Arcange.
 
-## Planned architecture
+## Planned stack
+- React + Vite
+- Node.js + Express
+- MongoDB
+- Google OAuth / OpenID Connect
+- REST API
 
-- `apps/web` — Public portfolio (React + Vite)
-- `apps/admin` — Secure admin dashboard
-- `apps/api` — Node.js + Express API
-- `packages/shared` — Shared types/utilities
-- `packages/ui` — Shared UI components
-- `packages/config` — Shared configuration
-- `docs` — Architecture, API, and database documentation
-- `scripts` — Project automation and maintenance scripts
+## Apps
+- `apps/web` — public portfolio
+- `apps/admin` — secure admin dashboard
+- `apps/api` — backend API
 
-## Planned features
+## Security
+Admin access will use Google authentication plus an authorized-email allowlist. Secrets must remain in environment variables and must never be committed to Git.
 
-- Colorful responsive portfolio
-- Projects, skills, education, experience, achievements and certificates
-- Ejo Labs one-month training entry
-- GitHub integration
-- Google OAuth admin authentication
-- Authorized-email admin access control
-- Profile photo/media management
-- CV management
-- Editable social links
-- Editable copyright text and automatic year
-- MongoDB-backed CMS
+## Development roadmap
+1. Foundation
+2. Public portfolio UI
+3. Google authentication
+4. Admin CMS
+5. GitHub integration
+6. Media/CV management
+7. Production security and deployment
