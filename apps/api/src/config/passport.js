@@ -7,7 +7,7 @@ export function configurePassport() {
   passport.use(new GoogleStrategy({
     clientID: env.googleClientId,
     clientSecret: env.googleClientSecret,
-    callbackURL: `${env.webUrl.replace(/\/$/, '')}/api/auth/google/callback`,
+    callbackURL: `${env.apiUrl.replace(/\/$/, '')}/api/auth/google/callback`,
   }, async (_accessToken, _refreshToken, profile, done) => {
     try {
       const email = profile.emails?.[0]?.value?.trim().toLowerCase();
