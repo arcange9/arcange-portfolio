@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-const required = ['MONGODB_URI', 'SESSION_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ADMIN_EMAIL'];
+const required = ['MONGODB_URI', 'SESSION_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ADMIN_EMAIL', 'API_URL'];
 
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -10,6 +10,7 @@ export const env = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
   adminEmail: process.env.ADMIN_EMAIL?.trim().toLowerCase(),
+  apiUrl: process.env.API_URL || 'http://localhost:5000',
   webUrl: process.env.WEB_URL || 'http://localhost:5173',
   adminUrl: process.env.ADMIN_URL || 'http://localhost:5174',
 };
