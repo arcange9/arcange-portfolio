@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes.js';
 import contentRoutes from './routes/content.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import auditRoutes from './routes/audit.routes.js';
+import bootstrapRoutes from './routes/bootstrap.routes.js';
 import { requireCsrf } from './middleware/csrf.middleware.js';
 import { env } from './config/environment.js';
 
@@ -36,6 +37,7 @@ export function createApp(){
   app.use('/api/uploads',uploadRoutes);
   app.use('/api/content',contentRoutes);
   app.use('/api/audit',auditRoutes);
+  app.use('/api/bootstrap',bootstrapRoutes);
   app.use((err,_req,res,_next)=>{console.error(err);res.status(err.status||500).json({error:err.status?err.message:'Internal server error'});});
   return app;
 }
