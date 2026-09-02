@@ -2,81 +2,14 @@ import { Router } from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import rateLimit from 'express-rate-limit';
 import { env } from '../config/environment.js';
 import { requireAdmin } from '../middleware/admin.middleware.js';
-
-const router = Router();
-const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED = {
-  jpeg: { mime: 'image/jpeg', ext: 'jpg' },
-  png: { mime: 'image/png', ext: 'png' },
-  webp: { mime: 'image/webp', ext: 'webp' },
-  gif: { mime: 'image/gif', ext: 'gif' }
-};
-
-function detectImage(buffer) {
-  if (buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return ALLOWED.png;
-  if (buffer.length >= 3 && buffer.subarray(0, 3).equals(Buffer.from([255,216,255]))) return ALLOWED.jpeg;
-  if (buffer.length >= 6 && (buffer.subarray(0, 6).toString('ascii') === 'GIF87a' || buffer.subarray(0, 6).toString('ascii') === 'GIF89a')) return ALLOWED.gif;
-  if (buffer.length >= 12 && buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP') return ALLOWED.webp;
-  return null;
-}
-
-function parseMultipart(req) {
-  return new Promise((resolve, reject) => {
-    const contentType = req.headers['content-type'] || '';
-    const match = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
-    if (!match) return reject(Object.assign(new Error('Invalid multipart request'), { status: 400 }));
-    const boundary = Buffer.from(`--${match[1] || match[2]}`);
-    const chunks = [];
-    let total = 0;
-
-    req.on('data', (chunk) => {
-      total += chunk.length;
-      if (total > MAX_BYTES + 1024 * 1024) {
-        req.destroy();
-        return reject(Object.assign(new Error('File is too large'), { status: 413 }));
-      }
-      chunks.push(chunk);
-    });
-    req.on('error', reject);
-    req.on('end', () => {
-      try {
-        const body = Buffer.concat(chunks);
-        const headerEnd = body.indexOf(Buffer.from('\r\n\r\n'));
-        const firstBoundary = body.indexOf(boundary);
-        if (headerEnd < 0 || firstBoundary < 0 || firstBoundary > headerEnd) throw Object.assign(new Error('Invalid multipart upload'), { status: 400 });
-        const headers = body.subarray(firstBoundary + boundary.length + 2, headerEnd).toString('utf8');
-        const filenameMatch = headers.match(/filename="([^"]*)"/i);
-        if (!filenameMatch || !filenameMatch[1]) throw Object.assign(new Error('No image file supplied'), { status: 400 });
-        const dataStart = headerEnd + 4;
-        const nextBoundary = body.indexOf(boundary, dataStart);
-        if (nextBoundary < 0) throw Object.assign(new Error('Invalid multipart file data'), { status: 400 });
-        const fileEnd = nextBoundary - 2;
-        const file = body.subarray(dataStart, fileEnd >= dataStart ? fileEnd : nextBoundary);
-        resolve({ originalName: filenameMatch[1], buffer: file });
-      } catch (error) { reject(error); }
-    });
-  });
-}
-
-router.post('/image', requireAdmin, async (req, res, next) => {
-  try {
-    if (!String(req.headers['content-type'] || '').toLowerCase().startsWith('multipart/form-data')) {
-      return res.status(415).json({ error: 'Use multipart/form-data for image uploads' });
-    }
-    const { originalName, buffer } = await parseMultipart(req);
-    if (!buffer.length || buffer.length > MAX_BYTES) return res.status(413).json({ error: 'Image must be between 1 byte and 5 MB' });
-    const detected = detectImage(buffer);
-    if (!detected) return res.status(415).json({ error: 'Only JPEG, PNG, WebP and GIF images are allowed' });
-
-    fs.mkdirSync(env.uploadDir, { recursive: true });
-    const filename = `${crypto.randomBytes(18).toString('hex')}.${detected.ext}`;
-    const destination = path.join(env.uploadDir, filename);
-    fs.writeFileSync(destination, buffer, { flag: 'wx', mode: 0o600 });
-    const url = `${env.apiUrl}/uploads/${filename}`;
-    res.status(201).json({ url, filename, mimeType: detected.mime, size: buffer.length, originalName });
-  } catch (error) { next(error); }
-});
-
+import { audit } from '../utils/audit.js';
+const router=Router();const MAX_BYTES=5*1024*1024;
+const ALLOWED={jpeg:{mime:'image/jpeg',ext:'jpg'},png:{mime:'image/png',ext:'png'},webp:{mime:'image/webp',ext:'webp'},gif:{mime:'image/gif',ext:'gif'}};
+function detectImage(b){if(b.length>=8&&b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return ALLOWED.png;if(b.length>=3&&b.subarray(0,3).equals(Buffer.from([255,216,255])))return ALLOWED.jpeg;if(b.length>=6&&['GIF87a','GIF89a'].includes(b.subarray(0,6).toString('ascii')))return ALLOWED.gif;if(b.length>=12&&b.subarray(0,4).toString('ascii')==='RIFF'&&b.subarray(8,12).toString('ascii')==='WEBP')return ALLOWED.webp;return null;}
+function parseMultipart(req){return new Promise((resolve,reject)=>{const ct=req.headers['content-type']||'';const match=ct.match(/boundary=(?:"([^"]+)"|([^;]+))/i);if(!match)return reject(Object.assign(new Error('Invalid multipart request'),{status:400}));const boundary=Buffer.from(`--${match[1]||match[2]}`);const chunks=[];let total=0;req.on('data',chunk=>{total+=chunk.length;if(total>MAX_BYTES+1024*1024){req.destroy();return reject(Object.assign(new Error('File is too large'),{status:413}));}chunks.push(chunk);});req.on('error',reject);req.on('end',()=>{try{const body=Buffer.concat(chunks),headerEnd=body.indexOf(Buffer.from('\r\n\r\n')),first=body.indexOf(boundary);if(headerEnd<0||first<0||first>headerEnd)throw Object.assign(new Error('Invalid multipart upload'),{status:400});const headers=body.subarray(first+boundary.length+2,headerEnd).toString('utf8'),fm=headers.match(/filename="([^"]*)"/i);if(!fm?.[1])throw Object.assign(new Error('No image file supplied'),{status:400});const dataStart=headerEnd+4,next=body.indexOf(boundary,dataStart);if(next<0)throw Object.assign(new Error('Invalid multipart file data'),{status:400});resolve({originalName:fm[1],buffer:body.subarray(dataStart,next-2)});}catch(e){reject(e);}});});}
+const uploadLimiter=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:'draft-7',legacyHeaders:false,message:{error:'Too many uploads. Please try again later.'}});
+router.post('/image',uploadLimiter,requireAdmin,async(req,res,next)=>{try{if(!String(req.headers['content-type']||'').toLowerCase().startsWith('multipart/form-data'))return res.status(415).json({error:'Use multipart/form-data for image uploads'});const{originalName,buffer}=await parseMultipart(req);if(!buffer.length||buffer.length>MAX_BYTES)return res.status(413).json({error:'Image must be between 1 byte and 5 MB'});const detected=detectImage(buffer);if(!detected)return res.status(415).json({error:'Only JPEG, PNG, WebP and GIF images are allowed'});fs.mkdirSync(env.uploadDir,{recursive:true});const filename=`${crypto.randomBytes(18).toString('hex')}.${detected.ext}`;fs.writeFileSync(path.join(env.uploadDir,filename),buffer,{flag:'wx',mode:0o600});await audit(req,'UPLOAD','media','Image uploaded',filename,{mimeType:detected.mime,size:buffer.length});res.status(201).json({url:`${env.apiUrl}/uploads/${filename}`,filename,mimeType:detected.mime,size:buffer.length,originalName});}catch(e){next(e);}});
 export default router;
