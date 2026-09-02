@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUpRight, Award, Bot, Check, Code2, Database, ExternalLink, FileText, GraduationCap, Image as ImageIcon, Mail, MapPin, Menu, MessageCircle, Monitor, Sparkles, X } from 'lucide-react';
 import './styles.css';
+import './v2.css';
 
 const fallbackSkills=['Python','C','C++','Java','JavaScript','HTML5','CSS3','React.js','Node.js','Express.js','Electron.js','MongoDB','MySQL','SQL','NoSQL'];
 const fallbackProjects=[
