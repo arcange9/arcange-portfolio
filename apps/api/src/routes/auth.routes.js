@@ -2,14 +2,24 @@ import { Router } from 'express';
 import passport from '../config/passport.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import { env } from '../config/environment.js';
+import { issueCsrfToken, refreshCsrfToken } from '../middleware/csrf.middleware.js';
+import { audit } from '../utils/audit.js';
 
-const router = Router();
-
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], prompt: 'select_account' }));
-router.get('/google/callback', passport.authenticate('google', {
-  failureRedirect: `${env.adminUrl.replace(/\/$/, '')}/?error=unauthorized`
-}), (_req, res) => res.redirect(env.adminUrl));
-router.get('/me', requireAuth, (req, res) => res.json({ user: { id: req.user.id, name: req.user.name, email: req.user.email, photo: req.user.photo, role: req.user.role } }));
-router.post('/logout', (req, res, next) => req.logout((error) => { if (error) return next(error); req.session.destroy(() => res.status(204).end()); }));
-
+const router=Router();
+router.get('/google',passport.authenticate('google',{scope:['profile','email'],prompt:'select_account'}));
+router.get('/google/callback',passport.authenticate('google',{failureRedirect:`${env.adminUrl.replace(/\/$/,'')}/?error=unauthorized`}), (req,res,next)=>{
+  const user=req.user;
+  req.session.regenerate(error=>{
+    if(error)return next(error);
+    req.login(user,async loginError=>{
+      if(loginError)return next(loginError);
+      refreshCsrfToken(req);
+      await audit(req,'LOGIN','auth','Admin login');
+      res.redirect(env.adminUrl);
+    });
+  });
+});
+router.get('/me',requireAuth,(req,res)=>{res.set('Cache-Control','no-store');res.json({user:{id:req.user.id,name:req.user.name,email:req.user.email,photo:req.user.photo,role:req.user.role}});});
+router.get('/csrf',requireAuth,issueCsrfToken);
+router.post('/logout',(req,res,next)=>req.logout(error=>{if(error)return next(error);req.session.destroy(()=>res.status(204).end());}));
 export default router;
