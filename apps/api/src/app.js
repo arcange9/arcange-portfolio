@@ -7,6 +7,7 @@ import MongoStore from 'connect-mongo';
 import passport from './config/passport.js';
 import authRoutes from './routes/auth.routes.js';
 import contentRoutes from './routes/content.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 import { env } from './config/environment.js';
 
 export function createApp() {
@@ -52,8 +53,20 @@ export function createApp() {
   });
 
   app.get('/api/health', (_req,res)=>res.json({ok:true,service:'arcange-portfolio-api'}));
+  app.use('/uploads', express.static(env.uploadDir, {
+    index: false,
+    dotfiles: 'deny',
+    fallthrough: false,
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }));
   app.use('/api/auth', authRoutes);
+  app.use('/api/uploads', uploadRoutes);
   app.use('/api/content', contentRoutes);
-  app.use((err,_req,res,_next)=>{ console.error(err); res.status(500).json({error:'Internal server error'}); });
+  app.use((err,_req,res,_next)=>{
+    console.error(err);
+    res.status(err.status || 500).json({error: err.status ? err.message : 'Internal server error'});
+  });
   return app;
 }
