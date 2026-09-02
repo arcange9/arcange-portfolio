@@ -1,9 +1,11 @@
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 async function request(path, options = {}) {
+  const isFormData = options.body instanceof FormData;
+  const headers = { ...(isFormData ? {} : { 'Content-Type': 'application/json' }), ...(options.headers || {}) };
   const response = await fetch(`${API}${path}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    headers,
     ...options
   });
   if (!response.ok) {
@@ -19,6 +21,14 @@ export const contentApi = {
   create: (type, body) => request(`/api/content/${type}`, { method: 'POST', body: JSON.stringify(body) }),
   update: (type, id, body) => request(`/api/content/${type}/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   remove: (type, id) => request(`/api/content/${type}/${id}`, { method: 'DELETE' })
+};
+
+export const uploadApi = {
+  image: (file) => {
+    const form = new FormData();
+    form.append('image', file);
+    return request('/api/uploads/image', { method: 'POST', body: form });
+  }
 };
 
 export const siteApi = {
