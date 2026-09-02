@@ -44,17 +44,16 @@ function parseMultipart(req) {
       try {
         const body = Buffer.concat(chunks);
         const headerEnd = body.indexOf(Buffer.from('\r\n\r\n'));
-        if (headerEnd < 0) throw Object.assign(new Error('Invalid upload payload'), { status: 400 });
         const firstBoundary = body.indexOf(boundary);
-        if (firstBoundary < 0 || firstBoundary > headerEnd) throw Object.assign(new Error('Invalid multipart boundary'), { status: 400 });
+        if (headerEnd < 0 || firstBoundary < 0 || firstBoundary > headerEnd) throw Object.assign(new Error('Invalid multipart upload'), { status: 400 });
         const headers = body.subarray(firstBoundary + boundary.length + 2, headerEnd).toString('utf8');
         const filenameMatch = headers.match(/filename="([^"]*)"/i);
         if (!filenameMatch || !filenameMatch[1]) throw Object.assign(new Error('No image file supplied'), { status: 400 });
         const dataStart = headerEnd + 4;
-        const dataEnd = body.indexOf(Buffer.from('\r\n'), dataStart);
-        const nextBoundary = body.indexOf(boundary, dataEnd + 2);
+        const nextBoundary = body.indexOf(boundary, dataStart);
         if (nextBoundary < 0) throw Object.assign(new Error('Invalid multipart file data'), { status: 400 });
-        const file = body.subarray(dataStart, dataEnd > dataStart ? dataEnd : nextBoundary);
+        const fileEnd = nextBoundary - 2;
+        const file = body.subarray(dataStart, fileEnd >= dataStart ? fileEnd : nextBoundary);
         resolve({ originalName: filenameMatch[1], buffer: file });
       } catch (error) { reject(error); }
     });
