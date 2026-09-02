@@ -1,20 +1,4 @@
 import crypto from 'node:crypto';
-
-export function issueCsrfToken(req,res){
-  if(!req.session?.csrfToken)return res.status(401).json({error:'Authentication required'});
-  if(!req.session.csrfToken)req.session.csrfToken=crypto.randomBytes(32).toString('hex');
-  res.set('Cache-Control','no-store');
-  res.json({csrfToken:req.session.csrfToken});
-}
-
-export function refreshCsrfToken(req){
-  if(req.session)req.session.csrfToken=crypto.randomBytes(32).toString('hex');
-}
-
-export function requireCsrf(req,res,next){
-  if(!['POST','PATCH','PUT','DELETE'].includes(req.method))return next();
-  const expected=req.session?.csrfToken;
-  const received=req.get('x-csrf-token');
-  if(!expected||!received||expected.length!==received.length||!crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(received)))return res.status(403).json({error:'Invalid CSRF token'});
-  next();
-}
+export function issueCsrfToken(req,res){if(!req.session)return res.status(401).json({error:'Authentication required'});if(!req.session.csrfToken)req.session.csrfToken=crypto.randomBytes(32).toString('hex');res.set('Cache-Control','no-store');res.json({csrfToken:req.session.csrfToken});}
+export function refreshCsrfToken(req){if(req.session)req.session.csrfToken=crypto.randomBytes(32).toString('hex');}
+export function requireCsrf(req,res,next){if(!['POST','PATCH','PUT','DELETE'].includes(req.method))return next();const expected=req.session?.csrfToken,received=req.get('x-csrf-token');if(!expected||!received||expected.length!==received.length||!crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(received)))return res.status(403).json({error:'Invalid CSRF token'});next();}
