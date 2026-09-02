@@ -39,7 +39,9 @@ export function getManagedStoragePath(value) {
     const url = new URL(value);
     const prefix = `/storage/v1/object/public/${env.supabaseBucket}/`;
     if (!url.pathname.startsWith(prefix)) return null;
-    return decodeURIComponent(url.pathname.slice(prefix.length));
+    const pathname = decodeURIComponent(url.pathname.slice(prefix.length));
+    if (!pathname || pathname.includes('..') || pathname.startsWith('/')) return null;
+    return pathname;
   } catch {
     return null;
   }
@@ -76,8 +78,8 @@ export async function uploadImage(buffer, mimeType, folder = 'images') {
 
 export async function deleteStorageObject(value) {
   requireStorageConfig();
-  const storagePath = getManagedStoragePath(value) || String(value || '').replace(/^\/+/, '');
-  if (!storagePath || storagePath.includes('..')) return false;
+  const storagePath = getManagedStoragePath(value);
+  if (!storagePath) return false;
 
   const endpoint = `${env.supabaseUrl.replace(/\/$/, '')}/storage/v1/object/${encodeURIComponent(env.supabaseBucket)}/${encodeStoragePath(storagePath)}`;
   const response = await fetch(endpoint, {
