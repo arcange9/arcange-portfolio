@@ -14,9 +14,21 @@ async function request(path, options = {}) {
   return response.status === 204 ? null : response.json();
 }
 
-export const portfolioApi = {
-  list: () => request('/api/admin/items'),
-  create: (body) => request('/api/admin/items', { method: 'POST', body: JSON.stringify(body) }),
-  update: (id, body) => request(`/api/admin/items/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  remove: (id) => request(`/api/admin/items/${id}`, { method: 'DELETE' })
+export const contentApi = {
+  list: (type) => request(`/api/content/${type}`),
+  create: (type, body) => request(`/api/content/${type}`, { method: 'POST', body: JSON.stringify(body) }),
+  update: (type, id, body) => request(`/api/content/${type}/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  remove: (type, id) => request(`/api/content/${type}/${id}`, { method: 'DELETE' })
 };
+
+export const siteApi = {
+  get: async () => {
+    const rows = await contentApi.list('settings');
+    return rows[0] || null;
+  },
+  save: (id, body) => id
+    ? contentApi.update('settings', id, body)
+    : contentApi.create('settings', body)
+};
+
+export { API, request };
