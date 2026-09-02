@@ -13,6 +13,7 @@ export const env = {
   apiUrl: process.env.API_URL || 'http://localhost:5000',
   webUrl: process.env.WEB_URL || 'http://localhost:5173',
   adminUrl: process.env.ADMIN_URL || 'http://localhost:5174',
+  uploadDir: process.env.UPLOAD_DIR || 'public/uploads'
 };
 
 export function validateEnvironment() {
