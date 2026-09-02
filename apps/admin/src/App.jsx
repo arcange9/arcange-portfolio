@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, LogOut, User, FolderKanban, Wrench, GraduationCap, Award, Image as ImageIcon, FileText, Settings, Link as LinkIcon, Plus, Trash2, Pencil, RefreshCw, Palette, Save, Eye } from 'lucide-react';
-import { API, contentApi, siteApi } from './api';
+import { ShieldCheck, LogOut, User, FolderKanban, Wrench, GraduationCap, Award, Image as ImageIcon, FileText, Settings, Link as LinkIcon, Plus, Trash2, Pencil, RefreshCw, Palette, Save, Eye, Upload } from 'lucide-react';
+import { API, contentApi, siteApi, uploadApi } from './api';
 import './styles.css';
 
 const modules = [
@@ -11,19 +11,20 @@ const modules = [
 ];
 
 const fields = {
-  profiles: [['name','Name','text',true],['title','Professional title','text'],['shortBio','Short bio','textarea'],['longBio','Full biography','textarea'],['photoUrl','Photo URL','url'],['location','Location','text'],['email','Email','email'],['phone','Phone','text'],['resumeUrl','Resume/CV URL','url']],
-  projects: [['title','Project name','text',true],['slug','Slug','text',true],['description','Description','textarea'],['imageUrl','Image URL','url'],['technologies','Technologies (comma separated)','text'],['githubUrl','GitHub URL','url'],['liveUrl','Live URL','url'],['category','Category','text'],['status','Status','text'],['featured','Featured','checkbox'],['published','Published','checkbox']],
+  profiles: [['name','Name','text',true],['title','Professional title','text'],['shortBio','Short bio','textarea'],['longBio','Full biography','textarea'],['photoUrl','Photo','url'],['location','Location','text'],['email','Email','email'],['phone','Phone','text'],['resumeUrl','Resume/CV URL','url']],
+  projects: [['title','Project name','text',true],['slug','Slug','text',true],['description','Description','textarea'],['imageUrl','Project image','url'],['technologies','Technologies (comma separated)','text'],['githubUrl','GitHub URL','url'],['liveUrl','Live URL','url'],['category','Category','text'],['status','Status','text'],['featured','Featured','checkbox'],['published','Published','checkbox']],
   skills: [['name','Skill name','text',true],['category','Category','text'],['level','Level (0-100)','number'],['icon','Icon name','text'],['published','Published','checkbox'],['sortOrder','Order','number']],
   education: [['institution','Institution','text',true],['program','Program','text',true],['level','Level','text'],['startYear','Start year','number'],['endYear','End year','number'],['description','Description','textarea'],['featured','Featured','checkbox'],['published','Published','checkbox']],
   experience: [['organization','Organization','text',true],['role','Role','text',true],['type','Type','text'],['startDate','Start date','date'],['endDate','End date','date'],['description','Description','textarea'],['technologies','Technologies (comma separated)','text'],['url','URL','url'],['published','Published','checkbox']],
-  achievements: [['title','Achievement title','text',true],['organization','Organization','text'],['year','Year','number'],['description','Description','textarea'],['link','Link','url'],['imageUrl','Image URL','url'],['published','Published','checkbox']],
-  certificates: [['title','Certificate title','text',true],['issuer','Issuer','text'],['issueDate','Issue date','date'],['credentialId','Credential ID','text'],['credentialUrl','Credential URL','url'],['imageUrl','Image URL','url'],['published','Published','checkbox']],
-  media: [['name','Media name','text',true],['url','Media URL','url',true],['type','Type','text'],['alt','Alt text','text'],['folder','Folder','text'],['size','Size (bytes)','number'],['mimeType','MIME type','text'],['published','Published','checkbox']],
+  achievements: [['title','Achievement title','text',true],['organization','Organization','text'],['year','Year','number'],['description','Description','textarea'],['link','Link','url'],['imageUrl','Achievement image','url'],['published','Published','checkbox']],
+  certificates: [['title','Certificate title','text',true],['issuer','Issuer','text'],['issueDate','Issue date','date'],['credentialId','Credential ID','text'],['credentialUrl','Credential URL','url'],['imageUrl','Certificate image','url'],['published','Published','checkbox']],
+  media: [['name','Media name','text',true],['url','Media file','url',true],['type','Type','text'],['alt','Alt text','text'],['folder','Folder','text'],['size','Size (bytes)','number'],['mimeType','MIME type','text'],['published','Published','checkbox']],
   cvs: [['title','CV title','text'],['url','CV URL','url',true],['version','Version','text'],['uploadedAt','Uploaded date','date'],['active','Active','checkbox']],
   socials: [['platform','Platform','text',true],['label','Label','text'],['url','URL','url',true],['icon','Icon name','text'],['enabled','Enabled','checkbox'],['sortOrder','Order','number']]
 };
 
 const colorDefaults = { primary:'#8b5cf6', secondary:'#ff4ecd', accent:'#42e8ff', background:'#070711', surface:'#111120', text:'#f7f7fb', muted:'#aaaabd' };
+const uploadableKeys = new Set(['photoUrl','imageUrl']);
 
 function normalizeValue(key, value) {
   if (['technologies'].includes(key)) return Array.isArray(value) ? value.join(', ') : (value || '');
@@ -37,7 +38,24 @@ function Editor({ type, initial, onSaved, onCancel }) {
   const definition = fields[type] || [];
   const [form, setForm] = useState(() => Object.fromEntries(definition.map(([key]) => [key, normalizeValue(key, initial?.[key])] )));
   const [saving,setSaving] = useState(false);
+  const [uploading,setUploading] = useState('');
   function set(key,value){setForm(prev=>({...prev,[key]:value}));}
+  async function handleUpload(key, event){
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if(!file) return;
+    setUploading(key);
+    try {
+      const result = await uploadApi.image(file);
+      set(key, result.url);
+      if(type === 'media') {
+        set('name', form.name || file.name.replace(/\.[^.]+$/, ''));
+        set('type', 'image');
+        set('mimeType', result.mimeType);
+        set('size', result.size);
+      }
+    } catch(e){ alert(e.message); } finally { setUploading(''); }
+  }
   async function save(e){
     e.preventDefault(); setSaving(true);
     try {
@@ -49,7 +67,7 @@ function Editor({ type, initial, onSaved, onCancel }) {
       onSaved();
     } catch(e){ alert(e.message); } finally { setSaving(false); }
   }
-  return <form className="editor" onSubmit={save}><h3>{initial?'Edit':'Add'} {type}</h3>{definition.map(([key,label,inputType,required])=>inputType==='checkbox'?<label className="check" key={key}><input type="checkbox" checked={!!form[key]} onChange={e=>set(key,e.target.checked)}/>{label}</label>:<label key={key}>{label}<>{inputType==='textarea'?<textarea value={form[key]} onChange={e=>set(key,e.target.value)} required={required}/>:<input type={inputType} value={form[key]} onChange={e=>set(key,e.target.value)} required={required}/>}</></label>)}<div className="editor-actions"><button type="button" onClick={onCancel}>Cancel</button><button className="save" disabled={saving}>{saving?'Saving…':'Save changes'}</button></div></form>;
+  return <form className="editor" onSubmit={save}><h3>{initial?'Edit':'Add'} {type}</h3>{definition.map(([key,label,inputType,required])=>inputType==='checkbox'?<label className="check" key={key}><input type="checkbox" checked={!!form[key]} onChange={e=>set(key,e.target.checked)}/>{label}</label>:<label key={key}>{label}<>{inputType==='textarea'?<textarea value={form[key]} onChange={e=>set(key,e.target.value)} required={required}/>:<div className="input-with-upload"><input type={inputType} value={form[key]} onChange={e=>set(key,e.target.value)} required={required}/>{(uploadableKeys.has(key) || (type === 'media' && key === 'url'))&&<label className="upload-btn"><Upload size={14}/>{uploading===key?'Uploading…':'Upload image'}<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e=>handleUpload(key,e)} disabled={!!uploading} hidden/></label>}</div>}</></label>)}<p className="upload-note">Images are stored on the portfolio API server with a random filename. Maximum 5 MB. SVG files are blocked.</p><div className="editor-actions"><button type="button" onClick={onCancel}>Cancel</button><button className="save" disabled={saving || !!uploading}>{saving?'Saving…':'Save changes'}</button></div></form>;
 }
 
 function SettingsEditor({ initial, onSaved }) {
