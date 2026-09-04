@@ -10,6 +10,7 @@ import contentRoutes from './routes/content.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import bootstrapRoutes from './routes/bootstrap.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
 import { requireCsrf } from './middleware/csrf.middleware.js';
 import { env } from './config/environment.js';
 
@@ -24,6 +25,7 @@ export function createApp(){
   app.use(session({secret:env.sessionSecret,resave:false,saveUninitialized:false,store:MongoStore.create({mongoUrl:env.mongoUri,touchAfter:24*3600}),cookie:{httpOnly:true,secure:env.nodeEnv==='production',sameSite:env.nodeEnv==='production'?'none':'lax',maxAge:1000*60*60*8}}));
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use('/api/analytics',analyticsRoutes);
   app.use((req,res,next)=>{
     if(!['POST','PATCH','PUT','DELETE'].includes(req.method))return next();
     const origin=req.get('origin');
