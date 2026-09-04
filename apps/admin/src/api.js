@@ -1,28 +1,11 @@
 const API=import.meta.env.VITE_API_URL||'http://localhost:5000';
-let csrfToken=null;
-let csrfPromise=null;
-
-async function getCsrfToken(force=false){
-  if(csrfToken&&!force)return csrfToken;
-  if(csrfPromise&&!force)return csrfPromise;
-  csrfPromise=fetch(`${API}/api/auth/csrf`,{credentials:'include',cache:'no-store'}).then(async r=>{if(!r.ok)throw new Error('Unable to initialize security token');const data=await r.json();csrfToken=data.csrfToken;return csrfToken;}).finally(()=>{csrfPromise=null;});
-  return csrfPromise;
-}
-
-async function request(path,options={},retried=false){
-  const isFormData=options.body instanceof FormData;
-  const method=(options.method||'GET').toUpperCase();
-  const headers={...(isFormData?{}:{'Content-Type':'application/json'}),...(options.headers||{})};
-  if(['POST','PATCH','PUT','DELETE'].includes(method))headers['X-CSRF-Token']=await getCsrfToken();
-  const response=await fetch(`${API}${path}`,{credentials:'include',headers,...options});
-  if(response.status===403&&!retried&&['POST','PATCH','PUT','DELETE'].includes(method)){csrfToken=null;return request(path,options,true);}
-  if(!response.ok){let message=`Request failed (${response.status})`;try{message=(await response.json()).error||message;}catch{}throw new Error(message);}
-  return response.status===204?null:response.json();
-}
-
-export const contentApi={list:type=>request(`/api/content/${type}`),create:(type,body)=>request(`/api/content/${type}`,{method:'POST',body:JSON.stringify(body)}),update:(type,id,body)=>request(`/api/content/${type}/${id}`,{method:'PATCH',body:JSON.stringify(body)}),remove:(type,id)=>request(`/api/content/${type}/${id}`,{method:'DELETE'}),revisions:id=>request(`/api/content/${id.type}/${id.id}/revisions`),trash:()=>request('/api/content/trash'),restore:revisionId=>request(`/api/content/trash/${revisionId}/restore`,{method:'POST'}),permanentDelete:revisionId=>request(`/api/content/trash/${revisionId}/permanent`,{method:'DELETE'}),bootstrap:()=>request('/api/bootstrap/current-site',{method:'POST'})};
+let csrfToken=null;let csrfPromise=null;
+async function getCsrfToken(force=false){if(csrfToken&&!force)return csrfToken;if(csrfPromise&&!force)return csrfPromise;csrfPromise=fetch(`${API}/api/auth/csrf`,{credentials:'include',cache:'no-store'}).then(async r=>{if(!r.ok)throw new Error('Unable to initialize security token');const data=await r.json();csrfToken=data.csrfToken;return csrfToken;}).finally(()=>{csrfPromise=null;});return csrfPromise;}
+async function request(path,options={},retried=false){const isFormData=options.body instanceof FormData;const method=(options.method||'GET').toUpperCase();const headers={...(isFormData?{}:{'Content-Type':'application/json'}),...(options.headers||{})};if(['POST','PATCH','PUT','DELETE'].includes(method))headers['X-CSRF-Token']=await getCsrfToken();const response=await fetch(`${API}${path}`,{credentials:'include',headers,...options});if(response.status===403&&!retried&&['POST','PATCH','PUT','DELETE'].includes(method)){csrfToken=null;return request(path,options,true);}if(!response.ok){let message=`Request failed (${response.status})`;try{message=(await response.json()).error||message;}catch{}throw new Error(message);}return response.status===204?null:response.json();}
+export const contentApi={list:type=>request(`/api/content/${type}`),create:(type,body)=>request(`/api/content/${type}`,{method:'POST',body:JSON.stringify(body)}),update:(type,id,body)=>request(`/api/content/${type}/${id}`,{method:'PATCH',body:JSON.stringify(body)}),remove:(type,id)=>request(`/api/content/${type}/${id}`,{method:'DELETE'}),revisions:item=>request(`/api/content/${item.type}/${item.id}/revisions`),restoreRevision:(type,id,revisionId)=>request(`/api/content/${type}/${id}/revisions/${revisionId}/restore`,{method:'POST'}),trash:()=>request('/api/content/trash'),restore:revisionId=>request(`/api/content/trash/${revisionId}/restore`,{method:'POST'}),permanentDelete:revisionId=>request(`/api/content/trash/${revisionId}/permanent`,{method:'DELETE'}),exportBackup:()=>request('/api/content/export'),bootstrap:()=>request('/api/bootstrap/current-site',{method:'POST'})};
 export const uploadApi={image:file=>{const form=new FormData();form.append('image',file);return request('/api/uploads/image',{method:'POST',body:form});},remove:url=>request('/api/uploads/image',{method:'DELETE',body:JSON.stringify({url})})};
 export const auditApi={list:(limit=100)=>request(`/api/audit?limit=${encodeURIComponent(limit)}`)};
+export const analyticsApi={summary:(days=30)=>request(`/api/analytics/summary?days=${days}`)};
 export const authApi={logout:()=>request('/api/auth/logout',{method:'POST'})};
 export const siteApi={get:async()=>{await contentApi.bootstrap();const rows=await contentApi.list('settings');return rows[0]||null;},save:(id,body)=>id?contentApi.update('settings',id,body):contentApi.create('settings',body)};
 export {API,request};
