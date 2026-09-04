@@ -7,5 +7,6 @@ export const uploadApi={image:file=>{const form=new FormData();form.append('imag
 export const auditApi={list:(limit=100)=>request(`/api/audit?limit=${encodeURIComponent(limit)}`)};
 export const analyticsApi={summary:(days=30)=>request(`/api/analytics/summary?days=${days}`)};
 export const authApi={logout:()=>request('/api/auth/logout',{method:'POST'})};
-export const siteApi={get:async()=>{await contentApi.bootstrap();const rows=await contentApi.list('settings');return rows[0]||null;},save:(id,body)=>id?contentApi.update('settings',id,body):contentApi.create('settings',body)};
+// Bootstrap is intentionally NOT called when merely loading settings. Bootstrap is an explicit setup action only; calling it on every admin navigation can recreate deleted default content.
+export const siteApi={get:async()=>{const rows=await contentApi.list('settings');return rows[0]||null;},save:(id,body)=>id?contentApi.update('settings',id,body):contentApi.create('settings',body)};
 export {API,request};
