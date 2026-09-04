@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const auditLogSchema = new mongoose.Schema({
-  action: { type: String, required: true, enum: ['CREATE','UPDATE','DELETE','UPLOAD','LOGIN','LOGOUT','SETTINGS_CHANGE'] },
+  action: { type: String, required: true, enum: ['CREATE','UPDATE','DELETE','DELETE_PERMANENTLY','UPLOAD','LOGIN','LOGOUT','SETTINGS_CHANGE'] },
   resource: { type: String, required: true, trim: true, maxlength: 80 },
   resourceId: { type: String, trim: true, maxlength: 80 },
   description: { type: String, required: true, trim: true, maxlength: 300 },
